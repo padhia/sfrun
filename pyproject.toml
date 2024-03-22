@@ -12,8 +12,9 @@ readme = "README.md"
 requires-python = ">=3.11"
 classifiers = ["Programming Language :: Python :: 3"]
 dependencies = [
-    "sfconn>=0.3.0",
-    "yappt>=0.3.1",
+    "sfconn==0.3.1rc2",
+    "yappt==0.3.2rc1",
+    "snowflake-snowpark-python",
     "openpyxl"
 ]
 dynamic = ["version"]

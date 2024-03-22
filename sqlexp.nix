@@ -1,4 +1,4 @@
-{ lib, buildPythonPackage, setuptools, openpyxl, sfconn, yappt }:
+{ lib, buildPythonPackage, setuptools, openpyxl, sfconn, snowflake-snowpark-python, yappt }:
 
 buildPythonPackage rec {
   pname = "sqlexp";
@@ -9,6 +9,7 @@ buildPythonPackage rec {
   propagatedBuildInputs = [
     openpyxl
     sfconn
+    snowflake-snowpark-python
     yappt
   ];
 

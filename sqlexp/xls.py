@@ -1,6 +1,6 @@
 "save SQL result-set in Excel format"
+
 import datetime as dt
-from argparse import ArgumentParser
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, Iterable, Optional, TypeVar
@@ -73,8 +73,3 @@ def export(rows: Iterable[tuple[Any, ...]], headers: list[str], types: list[type
 
     with output.open("wb") as f:
         wb.save(f)  # type: ignore
-
-
-def add_args(parser: ArgumentParser) -> Any:
-    """parse user supplied args"""
-    parser.add_argument("output", metavar="FILE", type=Path, help="output file name")
