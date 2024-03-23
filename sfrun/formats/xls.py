@@ -13,8 +13,8 @@ from openpyxl.utils import get_column_letter  # type: ignore
 T = TypeVar("T")
 
 
-def export(rows: Iterable[tuple[Any, ...]], headers: list[str], types: list[type], output: Path) -> None:
-    "export data in MS Excel (xlsx) format to file"
+def export(rows: Iterable[tuple[Any, ...]], headers: list[str], types: list[type], file: Path) -> None:
+    "export data in MS Excel (xlsx) format write to given file"
 
     def num_fmt(t: type) -> str:
         "Return numbering format from type"
@@ -71,5 +71,5 @@ def export(rows: Iterable[tuple[Any, ...]], headers: list[str], types: list[type
     for row in rows:
         ws.append([data_cell(v, f) for v, f in zip(row, col_numfmt)])  # type: ignore
 
-    with output.open("wb") as f:
+    with file.open("wb") as f:
         wb.save(f)  # type: ignore

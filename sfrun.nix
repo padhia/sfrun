@@ -1,7 +1,15 @@
-{ lib, buildPythonPackage, setuptools, openpyxl, sfconn, snowflake-snowpark-python, yappt }:
+{
+  lib,
+  buildPythonPackage,
+  setuptools,
+  openpyxl,
+  sfconn,
+  snowflake-snowpark-python,
+  yappt
+}:
 
-buildPythonPackage rec {
-  pname = "sqlexp";
+buildPythonPackage {
+  pname = "sfrun";
   version = "0.1.0";
   src = ./.;
   pyproject = true;
@@ -20,8 +28,8 @@ buildPythonPackage rec {
   doCheck = false;
 
   meta = with lib; {
-    homepage = "https://github.com/padhia/sqlexp";
-    description = "Batch SQL runner for Snowflake database";
+    homepage = "https://github.com/padhia/sfrun";
+    description = "Snwoflake SQL runner";
     maintainers = with maintainers; [ padhia ];
   };
 }

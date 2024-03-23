@@ -3,32 +3,43 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sqlexp"
+name = "sfrun"
 authors = [
     {name = "Paresh Adhia", email = "padhia+github@gmail.com"},
 ]
-description = "Snowflake SQL pretty printer"
+description = "Snwoflake SQL runner"
 readme = "README.md"
 requires-python = ">=3.11"
 classifiers = ["Programming Language :: Python :: 3"]
 dependencies = [
-    "sfconn==0.3.1rc2",
-    "yappt==0.3.2rc1",
+    "sfconn",
+    "yappt",
     "snowflake-snowpark-python",
     "openpyxl"
 ]
 dynamic = ["version"]
 
 [project.scripts]
-sqlexp = "sqlexp.main:cli"
+sfrun = "sfrun.main:cli"
+sfrunb = "sfrun.batch:cli"
 
 [tool.setuptools.dynamic]
-version = {attr = "sqlexp.main.__version__"}
+version = {attr = "sfrun.util.__version__"}
+
+[tool.setuptools]
+packages = [
+    "sfrun",
+    "sfrun.formats"
+]
 
 [tool.ruff]
 target-version = "py311"
 line-length = 130
-extend-select = ["I"]
+lint.extend-select = ["I"]
 
 [tool.pytest.ini_options]
 pythonpath = [ "." ]
+filterwarnings = [ "ignore" ]
+
+[tool.pyright]
+reportUnknownMemberType = false
