@@ -2,7 +2,7 @@
 
 import sys
 from argparse import ArgumentTypeError
-from enum import Enum, auto
+from enum import Enum, StrEnum, auto
 from logging import getLogger
 from pathlib import Path
 from typing import Any, Callable, Iterable, TextIO, TypeAlias, TypeVar
@@ -25,6 +25,12 @@ class Command(Enum):
     EXPORT = auto()
     SHOW_SQL = auto()
     SHOW_SCHEMA = auto()
+
+
+class ErrorAction(StrEnum):
+    STOP = "stop"
+    CONTINUE = "continue"
+    SKIP_FILE = "skip-file"
 
 
 def intersperse(fn: Callable[[T], U], xs: Iterable[T]) -> Iterable[U]:
