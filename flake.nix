@@ -1,76 +1,77 @@
 {
-  description = "Snwoflake SQL runner";
-
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
-
-    nix-utils.url = "github:padhia/nix-utils/next";
-    nix-utils.inputs.nixpkgs.follows = "nixpkgs";
-
     snowflake.url = "github:padhia/snowflake/next";
-    snowflake.inputs = {
-      nixpkgs.follows = "nixpkgs";
-      flake-utils.follows = "flake-utils";
-    };
-
     sfconn.url = "github:padhia/sfconn/next";
-    sfconn.inputs = {
-      nixpkgs.follows = "nixpkgs";
-      snowflake.follows = "snowflake";
-      flake-utils.follows = "flake-utils";
-    };
-
     yappt.url = "github:padhia/yappt/next";
-    yappt.inputs = {
-      nixpkgs.follows = "nixpkgs";
-      flake-utils.follows = "flake-utils";
-    };
+
+    snowflake.inputs.nixpkgs.follows = "nixpkgs";
+    sfconn.inputs.nixpkgs.follows = "nixpkgs";
+    yappt.inputs.nixpkgs.follows = "nixpkgs";
+
+    snowflake.inputs.flake-utils.follows = "flake-utils";
+    sfconn.inputs.flake-utils.follows = "flake-utils";
+    yappt.inputs.flake-utils.follows = "flake-utils";
+
+    sfconn.inputs.snowflake.follows = "snowflake";
   };
 
-  outputs = { self, nixpkgs, flake-utils, nix-utils, sfconn, snowflake, yappt }:
+  outputs = { self, nixpkgs, flake-utils, sfconn, snowflake, yappt }:
   let
-    inherit (nix-utils.lib) pyDevShell extendPyPkgsWith mkApps;
+    inherit (nixpkgs.lib) composeManyExtensions;
 
-    overlays.default = final: prev:
-      extendPyPkgsWith prev { sfrun = ./sfrun.nix; } // {sfrun = final.python311Packages.sfrun; };
+    overlays.default =
+    let
+      pkgOverlay = final: prev: {
+        sfrun = final.python312Packages.sfrun;
+
+        pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
+          (py-final: py-prev: {
+            sfrun = py-final.callPackage ./sfrun.nix {};
+          })
+        ];
+      };
+    in composeManyExtensions [
+      yappt.overlays.default
+      sfconn.overlays.default
+      snowflake.overlays.default
+      pkgOverlay
+    ];
 
     eachSystem = system:
     let
       pkgs = import nixpkgs {
         inherit system;
         config.allowUnfree = true;
-        overlays = [
-          yappt.overlays.default
-          sfconn.overlays.default
-          snowflake.overlays.default
-          self.overlays.default
-        ];
+        overlays = [ self.overlays.default ];
       };
 
-      devShells.default = pyDevShell {
-        inherit pkgs;
+      pyPkgs = pkgs.python312Packages;
+
+      devShells.default = pkgs.mkShell {
         name = "sfrun";
-        extra = [
-          "openpyxl"
-          "snowflake-snowpark-python"
-          "sfconn"
-          "yappt"
+        venvDir = "./.venv";
+        buildInputs = [
+          pkgs.ruff
+          pkgs.uv
+          pyPkgs.python
+          pyPkgs.venvShellHook
+          pyPkgs.pytest
+          pyPkgs.yappt
+          pyPkgs.sfconn
+          pyPkgs.snowflake-snowpark-python
         ];
-        pyVer = "311";
       };
 
       packages.default = pkgs.sfrun;
 
-      apps = mkApps {
-        inherit pkgs;
-        pkg = packages.default;
-        cmds = [ "sfrun" "sfrunb" ];
+      apps.default = {
+        type = "app";
+        program = "${packages.default}/bin/sfrun";
       };
+    in { inherit devShells packages apps; };
 
-    in {
-      inherit devShells packages apps;
-    };
   in {
     inherit overlays;
     inherit (flake-utils.lib.eachDefaultSystem eachSystem) devShells packages apps;
