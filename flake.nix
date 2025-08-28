@@ -24,7 +24,7 @@
     overlays.default =
     let
       pkgOverlay = final: prev: {
-        sfrun = final.python312Packages.sfrun;
+        sfrun = final.python313Packages.sfrun;
 
         pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
           (py-final: py-prev: {
