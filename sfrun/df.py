@@ -60,11 +60,11 @@ def _run(
         df = df.limit(limit)
 
     schema = df.schema
-    headers = prettify(f.name for f in schema.fields) if pretty_headers else [f.name for f in schema.fields]
+    field_names = [f.name[1:-1] if f.name.startswith('"') else f.name for f in schema.fields]
     types = [pytype(f.datatype) for f in schema.fields]
     data = take(df.to_local_iterator()) if limit is None else df.to_local_iterator()
 
-    export(data, headers, types)
+    export(data, prettify(field_names) if pretty_headers else field_names, types)
 
 
 def run(

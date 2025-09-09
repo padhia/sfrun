@@ -47,7 +47,7 @@
         overlays = [ self.overlays.default ];
       };
 
-      pyPkgs = pkgs.python312Packages;
+      pyPkgs = pkgs.python313Packages;
 
       devShells.default = pkgs.mkShell {
         name = "sfrun";
@@ -55,6 +55,7 @@
         buildInputs = [
           pkgs.ruff
           pkgs.uv
+          pkgs.pyrefly
           pyPkgs.python
           pyPkgs.venvShellHook
           pyPkgs.pytest
