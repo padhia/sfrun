@@ -1,14 +1,15 @@
 "save SQL result-set in jsonl format"
 
 import json
-from typing import TextIO
 
-from ..util import Data, textio
+from .base import Exporter
 from .json import iter_row
 
 
-@textio
-def export(rows: Data, headers: list[str], types: list[type], output: TextIO) -> None:
-    """export rows as JSON"""
-    for x in iter_row(rows, headers):
-        print(json.dumps(x), file=output)
+class JsonlExporter(Exporter, name="jsonl", help="jsonline"):
+    """export rows as JSON lines"""
+
+    def export(self) -> None:
+        with self.text_output() as output:
+            for x in iter_row(self.rows, self.headers):
+                print(json.dumps(x), file=output)

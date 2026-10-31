@@ -4,7 +4,8 @@ from textwrap import dedent
 from pytest import CaptureFixture
 from snowflake.connector import SnowflakeConnection
 
-from sfrun import Format, run_sql
+from sfrun import run_sql
+from sfrun.formats import CsvExporter, FmtExporter, MdExporter, RawExporter
 
 sql = """\
     select $1                as c1
@@ -28,7 +29,7 @@ def compare_lines(expected: str, actual: str):
 
 def test_fmt(cnx: SnowflakeConnection, capsys: CaptureFixture[str]):
     with cnx.cursor() as csr:
-        run_sql(csr, sql, format=Format.FMT)
+        run_sql(csr, sql, exporter=FmtExporter)
 
         compare_lines(
             capsys.readouterr().out,
@@ -48,7 +49,7 @@ def test_fmt(cnx: SnowflakeConnection, capsys: CaptureFixture[str]):
 
 def test_csv(cnx: SnowflakeConnection, capsys: CaptureFixture[str]):
     with cnx.cursor() as csr:
-        run_sql(csr, sql, format=Format.CSV)
+        run_sql(csr, sql, exporter=CsvExporter)
 
         compare_lines(
             capsys.readouterr().out,
@@ -65,7 +66,7 @@ def test_csv(cnx: SnowflakeConnection, capsys: CaptureFixture[str]):
 
 def test_md(cnx: SnowflakeConnection, capsys: CaptureFixture[str]):
     with cnx.cursor() as csr:
-        run_sql(csr, sql, format=Format.MD)
+        run_sql(csr, sql, exporter=MdExporter)
 
         compare_lines(
             capsys.readouterr().out,
@@ -83,7 +84,7 @@ def test_md(cnx: SnowflakeConnection, capsys: CaptureFixture[str]):
 
 def test_raw(cnx: SnowflakeConnection, capsys: CaptureFixture[str]):
     with cnx.cursor() as csr:
-        run_sql(csr, sql, format=Format.RAW)
+        run_sql(csr, sql, exporter=RawExporter)
 
         compare_lines(
             capsys.readouterr().out,

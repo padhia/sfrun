@@ -1,10 +1,10 @@
-from typing import TextIO
-
-from ..util import Data, textio
+from .base import Exporter
 
 
-@textio
-def export(rows: Data, headers: list[str], types: list[type], file: TextIO) -> None:
+class RawExporter(Exporter, name="raw", help="raw (no headers, tab delimited)"):
     """export data in raw format (textual, tab delimited)"""
-    for r in rows:
-        print("\t".join(str(c) for c in r), file=file)
+
+    def export(self) -> None:
+        with self.text_output() as file:
+            for r in self.rows:
+                print("\t".join(str(c) for c in r), file=file)

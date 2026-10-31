@@ -2,19 +2,21 @@
   lib,
   buildPythonPackage,
   setuptools,
+  jinja2,
   openpyxl,
   sfconn,
   snowflake-snowpark-python,
-  yappt
+  yappt,
 }:
 
 buildPythonPackage {
   pname = "sfrun";
-  version = "0.1.0";
+  version = "0.2.0";
   src = ./.;
   pyproject = true;
 
   propagatedBuildInputs = [
+    jinja2
     openpyxl
     sfconn
     snowflake-snowpark-python

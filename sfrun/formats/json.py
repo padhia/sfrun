@@ -1,11 +1,13 @@
 "save SQL result-set in JSON format"
 
 import json
-from typing import Any, Iterable, TextIO
+from collections.abc import Iterable
+from typing import Any
 
 from yappt import iter_more
 
-from ..util import Data, textio
+from ..util import Data
+from .base import Exporter
 
 
 def iter_row(rows: Data, headers: list[str]) -> Iterable[dict[str, Any]]:
@@ -26,8 +28,10 @@ def as_json_array(rows: Iterable[dict[str, Any]]) -> Iterable[str]:
     yield "]"
 
 
-@textio
-def export(rows: Data, headers: list[str], types: list[type], output: TextIO) -> None:
+class JsonExporter(Exporter, name="json", help="JSON"):
     """export rows as JSON"""
-    for x in as_json_array(iter_row(rows, headers)):
-        print(x, file=output)
+
+    def export(self) -> None:
+        with self.text_output() as output:
+            for x in as_json_array(iter_row(self.rows, self.headers)):
+                print(x, file=output)

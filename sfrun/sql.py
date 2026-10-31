@@ -11,8 +11,8 @@ from snowflake.connector.constants import FIELD_TYPES
 from snowflake.connector.cursor import SnowflakeCursor
 
 from . import __name__ as this_module
-from .formats import Format
-from .util import Command, Data, ExportFn, prettify, take
+from .formats import Exporter, FmtExporter
+from .util import Command, Data, prettify, take
 
 
 def main_sql(sqls: list[str], cmd: Command, **kwargs: Any) -> None:
@@ -39,20 +39,23 @@ def main_sql(sqls: list[str], cmd: Command, **kwargs: Any) -> None:
         go(**kwargs)  # type: ignore
 
 
-def _print_meta(csr: SnowflakeCursor, sql: str, export: ExportFn = Format.default().export(), **_: Any):
+def _print_meta(
+    csr: SnowflakeCursor, sql: str, exporter: type[Exporter] = FmtExporter, output: Path | None = None, **_: Any
+):
     meta = csr.describe(sql)  # type: ignore
 
     headers = ["Name", "Type", "Size", "Prec", "Scale", "Nulls?"]
     types = [str, str, int, int, int, bool]
     data: Data = ((m.name, FIELD_TYPES[m.type_code].name, m.internal_size, m.precision, m.scale, m.is_nullable) for m in meta)
 
-    export(data, headers, types)
+    exporter(data, headers, types, output).export()
 
 
 def _run(
     csr: SnowflakeCursor,
     sql: str,
-    export: ExportFn = Format.default().export(),
+    exporter: type[Exporter] = FmtExporter,
+    output: Path | None = None,
     limit: int | None = None,
     pretty_headers: bool = False,
 ) -> None:
@@ -64,19 +67,21 @@ def _run(
     types = [pytype(d) for d in csr.description]
     data = take(cast(Data, csr)) if limit is None else cast(Data, csr)
 
-    export(data, headers, types)
+    exporter(data, headers, types, output).export()
 
 
 def run(
     csr: SnowflakeCursor,
     sql: str,
-    format: Format = Format.default(),
+    exporter: type[Exporter] = FmtExporter,
     limit: int | None = None,
     file: Path | None = None,
     pretty_headers: bool = False,
 ) -> None:
-    return _run(csr, sql, export=format.export(file), limit=limit, pretty_headers=pretty_headers)
+    return _run(csr, sql, exporter=exporter, output=file, limit=limit, pretty_headers=pretty_headers)
 
 
-def print_meta(csr: SnowflakeCursor, sql: str, format: Format = Format.default(), file: Path | None = None, **kwargs: Any):
-    return _print_meta(csr, sql, export=format.export(file), **kwargs)
+def print_meta(
+    csr: SnowflakeCursor, sql: str, exporter: type[Exporter] = FmtExporter, file: Path | None = None, **kwargs: Any
+):
+    return _print_meta(csr, sql, exporter=exporter, output=file, **kwargs)

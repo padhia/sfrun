@@ -70,6 +70,8 @@
               pyPkgs.venvShellHook
               pyPkgs.pytest
               pyPkgs.yappt
+              pyPkgs.openpyxl
+              pyPkgs.jinja2
               pyPkgs.sfconn
               pyPkgs.snowflake-snowpark-python
             ];

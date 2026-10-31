@@ -1,23 +1,23 @@
 "Utility types and functions"
 
-import sys
+import os
 from argparse import ArgumentTypeError
+from collections.abc import Callable, Iterable
 from enum import Enum, auto
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Callable, Iterable, TextIO, TypeAlias, TypeVar
+from typing import Any
 
+from jinja2 import Environment, FileSystemLoader, StrictUndefined, TemplateSyntaxError, UndefinedError
 from snowflake.snowpark import DataFrame, Session
 
-Data: TypeAlias = Iterable[tuple[Any, ...]]
-ExportFn = Callable[[Data, list[str], list[type]], None]
-SnowparkFn: TypeAlias = Callable[[Session], DataFrame | str]
-T = TypeVar("T")
-U = TypeVar("U")
+type Data = Iterable[tuple[Any, ...]]
+type SnowparkFn = Callable[[Session], DataFrame | str]
+
 
 SOFT_LIMIT = 100
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 logger = getLogger(__name__)
 
 
@@ -27,7 +27,7 @@ class Command(Enum):
     SHOW_SCHEMA = auto()
 
 
-def intersperse(fn: Callable[[T], U], xs: Iterable[T]) -> Iterable[U]:
+def intersperse[T, U](fn: Callable[[T], U], xs: Iterable[T]) -> Iterable[U]:
     "add a new line between items and return and Iterable over input mapped by fn"
     is_first = True
     for x in xs:
@@ -36,19 +36,6 @@ def intersperse(fn: Callable[[T], U], xs: Iterable[T]) -> Iterable[U]:
         else:
             print()
         yield fn(x)
-
-
-def textio(
-    fn: Callable[[Data, list[str], list[type], TextIO], None],
-) -> Callable[[Data, list[str], list[type], Path | None], None]:
-    def wrapped(rows: Data, headers: list[str], types: list[type], output: Path | None):
-        if output is None:
-            fn(rows, headers, types, sys.stdout)
-        else:
-            with output.open("w") as f:
-                fn(rows, headers, types, f)
-
-    return wrapped
 
 
 def natural(v: str) -> int:
@@ -62,6 +49,29 @@ def natural(v: str) -> int:
 
 def prettify(headers: Iterable[str]) -> list[str]:
     return [x.replace("_", " ").title() for x in headers]
+
+
+class _Env(dict[str, str]):
+    "environment variables exposed to SQL templates as ctx.env"
+
+
+class _SqlUndefined(StrictUndefined):
+    @property
+    def _undefined_message(self) -> str:
+        if isinstance(self._undefined_obj, _Env):
+            return f"environment variable '{self._undefined_name}' is not set"
+        return super()._undefined_message
+
+
+def render_sql(path: Path) -> str:
+    "read SQL text from a file and render it as a Jinja2 template; ctx.env.X expands to environment variable X"
+    env = Environment(loader=FileSystemLoader(path.parent), undefined=_SqlUndefined, keep_trailing_newline=True)
+    try:
+        return env.get_template(path.name).render(ctx={"env": _Env(os.environ)})
+    except UndefinedError as err:
+        raise SystemExit(f"error: {path}: {err}") from err
+    except TemplateSyntaxError as err:
+        raise SystemExit(f"error: {path}:{err.lineno}: {err.message}") from err
 
 
 def take(data: Data, limit: int | None = None) -> Data:

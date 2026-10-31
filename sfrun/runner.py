@@ -2,12 +2,13 @@
 
 import logging
 import sys
+from collections.abc import Iterable
 from dataclasses import dataclass
 from functools import partial
 from io import StringIO
 from itertools import islice
 from pathlib import Path
-from typing import Any, Iterable, TextIO, cast
+from typing import Any, TextIO, cast
 
 from sfconn import pytype
 from snowflake.connector import DatabaseError, SnowflakeConnection
@@ -16,7 +17,7 @@ from snowflake.connector.util_text import split_statements
 from yappt import tabulate
 from yappt.grid import AsciiBoxStyle
 
-from .util import intersperse
+from .util import intersperse, render_sql
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +89,7 @@ class SqlScript(SqlRunner):
     """reads, parses and attempts to run all statments from file"""
 
     def __init__(self, input: Path | str | None, out_dir: Path | None = None, output_ext: str = "log", output: Path | None = None, **kwargs: Any):
-        text = cast(str, sys.stdin.read()) if input is None else input if isinstance(input, str) else input.read_text()
+        text = cast(str, sys.stdin.read()) if input is None else input if isinstance(input, str) else render_sql(input)
         sqls = [stmt for stmt, _ in split_statements(StringIO(text.strip()), remove_comments=True)]
 
         if out_dir is not None and output is None and isinstance(input, Path):

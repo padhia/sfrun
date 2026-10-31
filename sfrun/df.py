@@ -2,16 +2,17 @@
 
 import importlib.util as iu
 import sys
+from collections.abc import Iterable
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Iterable, cast
+from typing import Any, cast
 
 from sfconn import pytype, with_session
 from snowflake.snowpark import DataFrame, Session
 
 from . import __name__ as this_module
-from .formats import Format
-from .util import Command, ExportFn, SnowparkFn, prettify, take
+from .formats import Exporter, FmtExporter
+from .util import Command, SnowparkFn, prettify, take
 
 
 def main_py(file: list[Path], fn: str, **kwargs: Any) -> None:
@@ -35,14 +36,14 @@ def main_py(file: list[Path], fn: str, **kwargs: Any) -> None:
     return go(fs=fs, **kwargs)  # type: ignore
 
 
-def _print_meta(df: DataFrame, export: ExportFn = Format.default().export(), **_: Any):
+def _print_meta(df: DataFrame, exporter: type[Exporter] = FmtExporter, output: Path | None = None, **_: Any):
     schema = df.schema
 
     headers = ["Name", "Type", "Nulls?"]
     types = [str, str, bool]
     data = [(f.name, f.datatype, f.nullable) for f in schema.fields]
 
-    export(data, headers, types)
+    exporter(data, headers, types, output).export()
 
 
 def show_sql(df: DataFrame) -> None:
@@ -52,7 +53,8 @@ def show_sql(df: DataFrame) -> None:
 
 def _run(
     df: DataFrame,
-    export: ExportFn = Format.default().export(),
+    exporter: type[Exporter] = FmtExporter,
+    output: Path | None = None,
     limit: int | None = None,
     pretty_headers: bool = False,
 ) -> None:
@@ -64,21 +66,21 @@ def _run(
     types = [pytype(f.datatype) for f in schema.fields]
     data = take(df.to_local_iterator()) if limit is None else df.to_local_iterator()
 
-    export(data, prettify(field_names) if pretty_headers else field_names, types)
+    exporter(data, prettify(field_names) if pretty_headers else field_names, types, output).export()
 
 
 def run(
     df: DataFrame,
-    format: Format = Format.default(),
+    exporter: type[Exporter] = FmtExporter,
     limit: int | None = None,
     file: Path | None = None,
     pretty_headers: bool = False,
 ) -> None:
-    return _run(df, export=format.export(file), limit=limit, pretty_headers=pretty_headers)
+    return _run(df, exporter=exporter, output=file, limit=limit, pretty_headers=pretty_headers)
 
 
-def print_meta(df: DataFrame, format: Format = Format.default(), file: Path | None = None, **kwargs: Any):
-    return _print_meta(df, export=format.export(file), **kwargs)
+def print_meta(df: DataFrame, exporter: type[Exporter] = FmtExporter, file: Path | None = None, **kwargs: Any):
+    return _print_meta(df, exporter=exporter, output=file, **kwargs)
 
 
 def load_py(script: Path, fn: str = "main") -> SnowparkFn:

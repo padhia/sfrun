@@ -4,18 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sfrun"
-authors = [
-    {name = "Paresh Adhia", email = "padhia+github@gmail.com"},
-]
+authors = [{ name = "Paresh Adhia", email = "padhia+github@gmail.com" }]
 description = "Snwoflake SQL runner"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 classifiers = ["Programming Language :: Python :: 3"]
 dependencies = [
     "sfconn",
     "yappt",
     "snowflake-snowpark-python",
-    "openpyxl"
+    "openpyxl",
+    "jinja2",
 ]
 dynamic = ["version"]
 
@@ -24,22 +23,16 @@ sfrun = "sfrun.main:cli"
 sfrunb = "sfrun.batch:cli"
 
 [tool.setuptools.dynamic]
-version = {attr = "sfrun.util.__version__"}
+version = { attr = "sfrun.util.__version__" }
 
 [tool.setuptools]
-packages = [
-    "sfrun",
-    "sfrun.formats"
-]
+packages = ["sfrun", "sfrun.formats"]
 
 [tool.ruff]
-target-version = "py311"
+target-version = "py312"
 line-length = 130
 lint.extend-select = ["I"]
 
 [tool.pytest.ini_options]
-pythonpath = [ "." ]
-filterwarnings = [ "ignore" ]
-
-[tool.pyright]
-reportUnknownMemberType = false
+pythonpath = ["."]
+filterwarnings = ["ignore"]

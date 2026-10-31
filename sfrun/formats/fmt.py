@@ -1,13 +1,13 @@
-"""save output of SQL as CSV"""
-
-from typing import Optional, TextIO
+"""save output of SQL as formatted table"""
 
 from yappt import tabulate
 
-from ..util import Data, textio
+from .base import Exporter
 
 
-@textio
-def export(rows: Data, headers: list[str], types: list[type], file: TextIO) -> None:
+class FmtExporter(Exporter, name="fmt", help="tabular", default=True):
     "export formatted data"
-    tabulate(rows, headers=headers, types=[Optional[t] for t in types], file=file)  # type: ignore
+
+    def export(self) -> None:
+        with self.text_output() as file:
+            tabulate(self.rows, headers=self.headers, types=[t | None for t in self.types], file=file)  # type: ignore

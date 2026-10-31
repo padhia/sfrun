@@ -4,7 +4,8 @@ from textwrap import dedent
 from pytest import CaptureFixture
 from snowflake.snowpark import Session
 
-from sfrun import Format, run_df
+from sfrun import run_df
+from sfrun.formats import CsvExporter, FmtExporter, MdExporter, RawExporter
 
 from .sample import main
 
@@ -15,7 +16,7 @@ def compare_lines(expected: str, actual: str):
 
 
 def test_fmt(sess: Session, capsys: CaptureFixture[str]):
-    run_df(main(sess), format=Format.FMT)
+    run_df(main(sess), exporter=FmtExporter)
 
     compare_lines(
         capsys.readouterr().out,
@@ -34,7 +35,7 @@ def test_fmt(sess: Session, capsys: CaptureFixture[str]):
 
 
 def test_csv(sess: Session, capsys: CaptureFixture[str]):
-    run_df(main(sess), format=Format.CSV)
+    run_df(main(sess), exporter=CsvExporter)
 
     compare_lines(
         capsys.readouterr().out,
@@ -50,7 +51,7 @@ def test_csv(sess: Session, capsys: CaptureFixture[str]):
 
 
 def test_md(sess: Session, capsys: CaptureFixture[str]):
-    run_df(main(sess), format=Format.MD)
+    run_df(main(sess), exporter=MdExporter)
 
     compare_lines(
         capsys.readouterr().out,
@@ -67,7 +68,7 @@ def test_md(sess: Session, capsys: CaptureFixture[str]):
 
 
 def test_raw(sess: Session, capsys: CaptureFixture[str]):
-    run_df(main(sess), format=Format.RAW)
+    run_df(main(sess), exporter=RawExporter)
 
     compare_lines(
         capsys.readouterr().out,

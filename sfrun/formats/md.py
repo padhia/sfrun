@@ -1,33 +1,36 @@
 "save SQL result-set in markdown table format"
 
+from collections.abc import Iterable
 from itertools import chain
-from typing import Iterable, TextIO
 
 from yappt.tabulate import aligned_seq_iter, formatted_seq_iter
 from yappt.types import HAlign
 
-from ..util import Data, textio
+from .base import Exporter
 
 
-@textio
-def export(rows: Data, headers: list[str], types: list[type], output: TextIO) -> None:
-    """export rows with given metadata"""
+def separator(align: HAlign, width: int) -> str:
+    if align == HAlign.CENTER:
+        return ":" + "-" * max(width - 2, 1) + ":"
+    if align == HAlign.LEFT:
+        return ":" + "-" * max(width - 1, 1)
+    return "-" * max(width - 1, 1) + ":"
 
-    def emit(xs: Iterable[str]) -> None:
-        print("| " + " | ".join(xs) + " |", file=output)
 
-    def separator(align: HAlign, width: int) -> str:
-        if align == HAlign.CENTER:
-            return ":" + "-" * max(width - 2, 1) + ":"
-        if align == HAlign.LEFT:
-            return ":" + "-" * max(width - 1, 1)
-        return "-" * max(width - 1, 1) + ":"
+class MdExporter(Exporter, name="md", help="markdown"):
+    """export rows as a markdown table"""
 
-    meta, fseq = formatted_seq_iter(rows, types, headers)
-    alignments = [m.alignment for m in meta]
-    aseq = aligned_seq_iter(chain([[m.title for m in meta]], fseq), alignments)
+    def export(self) -> None:
+        with self.text_output() as output:
 
-    for e, r in enumerate(aseq):
-        if e == 1:
-            emit(separator(a, w) for a, w in zip(alignments, map(len, r)))
-        emit(r)
+            def emit(xs: Iterable[str]) -> None:
+                print("| " + " | ".join(xs) + " |", file=output)
+
+            meta, fseq = formatted_seq_iter(self.rows, self.types, self.headers)
+            alignments = [m.alignment for m in meta]
+            aseq = aligned_seq_iter(chain([[m.title for m in meta]], fseq), alignments)
+
+            for e, r in enumerate(aseq):
+                if e == 1:
+                    emit(separator(a, w) for a, w in zip(alignments, map(len, r)))
+                emit(r)
